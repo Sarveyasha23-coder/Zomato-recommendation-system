@@ -1,4 +1,3 @@
-
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -20,15 +19,12 @@ def load_data():
 
 df = load_data().copy()
 
-
-if "rate" not in df.columns:
-    df["rate"] = 0
-
-else:
-    df["rate"] = pd.to_numeric(
-        df["rate"].astype(str).str.replace("/5","", regex=False),
-        errors="coerce"
-    ).fillna(0)
+# Verify required columns exist
+required_columns = ["name", "combined_features"]
+missing_cols = [col for col in required_columns if col not in df.columns]
+if missing_cols:
+    st.error(f"❌ Missing required columns: {missing_cols}")
+    st.stop()
 
 @st.cache_resource
 def build_model(data):
@@ -61,14 +57,11 @@ st.markdown(f"""
 st.markdown("<h1 style='text-align:center;'>🍽️ AI Restaurant Discovery Platform</h1>", unsafe_allow_html=True)
 st.markdown("<p style='text-align:center;'>NLP Powered Restaurant Recommendation Engine</p>", unsafe_allow_html=True)
 
-c1,c2,c3,c4 = st.columns(4)
+c1, c2, c3, c4 = st.columns(4)
 c1.metric("Restaurants", f"{len(df):,}")
-c2.metric("Cuisines", df["cuisines"].nunique())
-c3.metric("Avg Rating", round(df["rate"].mean(),2))
+c2.metric("Unique Names", df["name"].nunique())
+c3.metric("Total Records", len(df))
 c4.metric("Favorites", len(st.session_state.favorites))
-
-all_cuisines = sorted(set(x.strip() for row in df["cuisines"].dropna() for x in str(row).split(",")))
-selected_cuisine = st.sidebar.selectbox("Cuisine Filter", ["All"] + all_cuisines)
 
 restaurant = st.selectbox("🔍 Search Restaurant", sorted(df["name"].unique()))
 
@@ -79,47 +72,54 @@ def recommend(name):
     for i, d in zip(indices.flatten()[1:], distances.flatten()[1:]):
         recs.append({
             "name": df.iloc[i]["name"],
-            "rate": df.iloc[i]["rate"],
-            "cuisines": df.iloc[i]["cuisines"],
-            "score": round((1-d)*100,2)
+            "score": round((1-d)*100, 2)
         })
     return recs
 
 if st.button("🚀 Get Recommendations"):
     st.session_state.history.append(restaurant)
-    for r in recommend(restaurant):
-        badge = "🟢 Excellent" if r["score"] >= 90 else "🟡 Strong"
-        st.markdown(f"""
-        <div class='card'>
-        <h3>{r['name']}</h3>
-        ⭐ Rating: {r['rate']}<br>
-        🍜 {r['cuisines']}<br>
-        🎯 Match: {r['score']}% {badge}
-        </div>
-        """, unsafe_allow_html=True)
+    recommendations = recommend(restaurant)
+    
+    if recommendations:
+        st.subheader(f"Recommendations similar to {restaurant}")
+        for r in recommendations:
+            badge = "🟢 Excellent Match" if r["score"] >= 90 else "🟡 Strong Match" if r["score"] >= 75 else "🔵 Good Match"
+            st.markdown(f"""
+            <div class='card'>
+            <h3>{r['name']}</h3>
+            🎯 Similarity Score: {r['score']}% {badge}
+            </div>
+            """, unsafe_allow_html=True)
 
-        if st.button(f"❤️ Favorite {r['name']}", key=r['name']):
-            if r["name"] not in st.session_state.favorites:
-                st.session_state.favorites.append(r["name"])
+            if st.button(f"❤️ Add to Favorites", key=r['name']):
+                if r["name"] not in st.session_state.favorites:
+                    st.session_state.favorites.append(r["name"])
+                    st.success(f"Added {r['name']} to favorites!")
+    else:
+        st.warning("No recommendations found.")
 
-st.subheader("🏆 Top Rated Restaurants")
-top = df.sort_values("rate", ascending=False).head(10)
-st.dataframe(top[["name","rate","cuisines"]], use_container_width=True)
+st.divider()
 
-st.subheader("📊 Analytics")
-a,b = st.columns(2)
+st.subheader("⭐ Your Favorites")
+if st.session_state.favorites:
+    for fav in st.session_state.favorites:
+        col1, col2 = st.columns([4, 1])
+        col1.write(f"🏷️ {fav}")
+        if col2.button("Remove", key=f"remove_{fav}"):
+            st.session_state.favorites.remove(fav)
+            st.rerun()
+else:
+    st.info("No favorites yet. Start searching and add restaurants to your favorites!")
 
-with a:
-    cuisine_counts = df["cuisines"].astype(str).str.split(",").explode().str.strip().value_counts().head(10)
-    st.plotly_chart(px.bar(cuisine_counts, title="Top Cuisines"), use_container_width=True)
-
-with b:
-    st.plotly_chart(px.histogram(df, x="rate", title="Ratings Distribution"), use_container_width=True)
-
-st.subheader("⭐ Favorites")
-st.write(st.session_state.favorites)
+st.divider()
 
 st.subheader("🕒 Recommendation History")
-st.write(st.session_state.history)
+if st.session_state.history:
+    history_df = pd.DataFrame({
+        "Search Query": st.session_state.history
+    })
+    st.dataframe(history_df, use_container_width=True, hide_index=True)
+else:
+    st.info("No search history yet.")
 
 st.markdown("<hr><center>Developed by Sarveyasha Sodhiya</center>", unsafe_allow_html=True)
