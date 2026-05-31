@@ -5,9 +5,7 @@ import pickle, os
 import gdown
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.neighbors import NearestNeighbors
-import plotly.express as px
 import plotly.graph_objects as go
-from datetime import datetime
 
 st.set_page_config(
     page_title="AI Restaurant Discovery", 
@@ -251,7 +249,6 @@ if "history" not in st.session_state:
 # Sidebar configuration
 with st.sidebar:
     st.markdown("### ⚙️ Settings")
-    theme = st.toggle("🌙 Dark Mode", value=False)
     
     st.markdown("---")
     st.markdown("### 📊 Quick Stats")
@@ -335,15 +332,19 @@ with col_search2:
     )
 
 def recommend(name, n_recs):
-    idx = df[df["name"] == name].index[0]
-    distances, indices = model.kneighbors(vectors[idx], n_neighbors=n_recs + 1)
-    recs = []
-    for i, d in zip(indices.flatten()[1:], distances.flatten()[1:]):
-        recs.append({
-            "name": df.iloc[i]["name"],
-            "score": round((1-d)*100, 2)
-        })
-    return recs
+    try:
+        idx = df[df["name"] == name].index[0]
+        distances, indices = model.kneighbors(vectors[idx], n_neighbors=min(n_recs + 1, len(df)))
+        recs = []
+        for i, d in zip(indices.flatten()[1:], distances.flatten()[1:]):
+            recs.append({
+                "name": df.iloc[i]["name"],
+                "score": round((1-d)*100, 2)
+            })
+        return recs
+    except Exception as e:
+        st.error(f"Error generating recommendations: {str(e)}")
+        return []
 
 col_rec1, col_rec2, col_rec3 = st.columns([1, 1, 1])
 
@@ -402,7 +403,8 @@ if get_recs:
                 
                 col_fav, col_info = st.columns([1, 1])
                 with col_fav:
-                    if st.button("❤️ Add to Favorites", key=f"add_{r['name']}", use_container_width=True):
+                    safe_key = f"add_{idx}_{hash(r['name']) % 100000}"
+                    if st.button("❤️ Add to Favorites", key=safe_key, use_container_width=True):
                         if r["name"] not in st.session_state.favorites:
                             st.session_state.favorites.append(r["name"])
                             st.success(f"Added to favorites!")
@@ -425,7 +427,7 @@ with col_fav_title[0]:
     st.markdown("<h2 class='section-title'>❤️ Your Favorites</h2>", unsafe_allow_html=True)
 
 if st.session_state.favorites:
-    for fav in st.session_state.favorites:
+    for fav_idx, fav in enumerate(st.session_state.favorites):
         col_fav1, col_fav2 = st.columns([4, 1])
         with col_fav1:
             st.markdown(f"""
@@ -434,7 +436,8 @@ if st.session_state.favorites:
             </div>
             """, unsafe_allow_html=True)
         with col_fav2:
-            if st.button("Remove", key=f"remove_{fav}", use_container_width=True):
+            safe_remove_key = f"remove_{fav_idx}_{hash(fav) % 100000}"
+            if st.button("Remove", key=safe_remove_key, use_container_width=True):
                 st.session_state.favorites.remove(fav)
                 st.success("Removed from favorites!")
                 st.rerun()
@@ -457,12 +460,13 @@ col_viz1, col_viz2 = st.columns(2)
 with col_viz1:
     # Distribution of recommendation scores
     sample_recs = []
-    for restaurant_name in df["name"].unique()[:50]:
+    restaurants_to_sample = min(20, len(df))
+    for restaurant_name in df["name"].unique()[:restaurants_to_sample]:
         try:
             recs = recommend(restaurant_name, 5)
             sample_recs.extend([r["score"] for r in recs])
         except:
-            pass
+            continue
     
     if sample_recs:
         fig1 = go.Figure()
@@ -483,6 +487,8 @@ with col_viz1:
             height=400
         )
         st.plotly_chart(fig1, use_container_width=True)
+    else:
+        st.info("Generate recommendations to see analytics!")
 
 with col_viz2:
     # Top 10 most searched restaurants
