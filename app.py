@@ -583,7 +583,7 @@ with st.sidebar:
     
     st.markdown("---")
     st.markdown("### 📚 About This App")
-    st.info("🤖 **AI Restaurant Discovery** is an advanced recommendation engine powered by NLP and Machine Learning. Find restaurants similar to your favorites in seconds! Built for recruiters, launched with ❤️", icon="ℹ️")
+    st.info("🤖 **AI Restaurant Discovery** is an advanced recommendation engine powered by NLP and Machine Learning. Find restaurants similar to your favorites in seconds! Built for recruiters", icon="ℹ️")
 
 # Developer Badge at the top
 st.markdown("""
@@ -856,7 +856,7 @@ if st.session_state.history:
     for idx, search in enumerate(recent_searches):
         if idx < 4:
             with col_hist1:
-                st.markdown(f"<div class='history-item'>🔍 {search}</div>", unsafe_after_html=True)
+                st.markdown(f"<div class='history-item'>🔍 {search}</div>", unsafe_allow_html=True)
         elif idx < 8:
             with col_hist2:
                 st.markdown(f"<div class='history-item'>🔍 {search}</div>", unsafe_allow_html=True)
