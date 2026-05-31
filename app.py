@@ -19,6 +19,7 @@ def load_data():
     return pickle.load(open("restaurants_reduced (1)","rb"))
 
 df = load_data().copy()
+st.write("Columns:", df.columns.tolist())
 
 df["rate"] = pd.to_numeric(df["rate"].astype(str).str.replace("/5","", regex=False), errors="coerce").fillna(0)
 
