@@ -22,6 +22,42 @@ st.markdown("""
         padding: 0;
     }
     
+    .developer-badge {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 15px 30px;
+        border-radius: 50px;
+        text-align: center;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        border: 2px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .developer-badge p {
+        color: white;
+        font-size: 1.1em;
+        font-weight: 700;
+        margin: 0;
+        letter-spacing: 0.5px;
+    }
+    
+    .developer-badge .emoji {
+        font-size: 1.3em;
+        margin-right: 8px;
+    }
+    
+    .developer-badge a {
+        color: #ffd700;
+        text-decoration: none;
+        font-weight: 800;
+        transition: all 0.3s ease;
+        margin-left: 8px;
+    }
+    
+    .developer-badge a:hover {
+        color: #ffed4e;
+        text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+    }
+    
     .main-header {
         text-align: center;
         padding: 40px 20px;
@@ -212,6 +248,13 @@ st.markdown("""
         font-size: 2.5em;
     }
 </style>
+""", unsafe_allow_html=True)
+
+# Developer Badge at the top
+st.markdown("""
+<div class='developer-badge'>
+    <p><span class='emoji'>👨‍💻</span>Built with ❤️ by <a href='https://github.com/Sarveyasha23-coder' target='_blank'>Sarveyasha Sodhiya</a></p>
+</div>
 """, unsafe_allow_html=True)
 
 FILE_ID = "1J8yk4T40xYfI7DbHOkLYrs8IL0oasKe-"
@@ -543,11 +586,12 @@ else:
     </div>
     """, unsafe_allow_html=True)
 
+st.markdown("---")
+
 # Footer
 st.markdown("""
 <div class='footer'>
     <p>🍽️ <strong>AI Restaurant Discovery</strong> • Powered by Machine Learning & NLP</p>
-    <p>Built with ❤️ by Sarveyasha Sodhiya</p>
     <p style='font-size: 0.85em; margin-top: 15px; color: #999;'>© 2026 • All Rights Reserved</p>
 </div>
 """, unsafe_allow_html=True)
