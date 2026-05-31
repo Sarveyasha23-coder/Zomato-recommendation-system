@@ -15,8 +15,8 @@ FILE_ID = "1J8yk4T40xYfI7DbHOkLYrs8IL0oasKe-"
 @st.cache_data
 def load_data():
     if not os.path.exists("restaurants.pkl"):
-        gdown.download(f"https://drive.google.com/uc?id={FILE_ID}", "restaurants_reduced.pkl", quiet=False)
-    return pickle.load(open("restaurants_reduced.pkl","rb"))
+        gdown.download(f"https://drive.google.com/uc?id={FILE_ID}", "restaurants_reduced (1)", quiet=False)
+    return pickle.load(open("restaurants_reduced (1)","rb"))
 
 df = load_data().copy()
 
